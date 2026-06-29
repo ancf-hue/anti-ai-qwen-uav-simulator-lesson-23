@@ -1,0 +1,28 @@
+# robots.txt для Anti-AI Qwen UAV Simulator Lesson 23
+# https://anti-ai-qwen-uav-simulator-lesson-2-omega.vercel.app/
+
+User-agent: *
+Allow: /
+Allow: /index.html
+Allow: /manifest.json
+Allow: /sitemap.xml
+
+# Разрешаем кэширование статических ресурсов
+Allow: /*.jpg$
+Allow: /*.jpeg$
+Allow: /*.png$
+Allow: /*.gif$
+Allow: /*.mp3$
+Allow: /*.ico$
+Allow: /*.js$
+Allow: /*.css$
+
+# Sitemap
+Sitemap: https://anti-ai-qwen-uav-simulator-lesson-2-omega.vercel.app/sitemap.xml
+
+# Хост
+Host: https://anti-ai-qwen-uav-simulator-lesson-2-omega.vercel.app
+
+# Anti-AI Qwen Academy
+# Бесплатный социальный офлайн-проект
+# Автор: Антон Анатольевич Кузнецов
