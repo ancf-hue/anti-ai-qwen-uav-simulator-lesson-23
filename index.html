@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<link rel="icon" href="favicon.ico" type="image/x-icon">
+<title>Урок 23: Выживший — Зона поражения | Qwen</title>
+<style>
+*{ box-sizing: border-box; margin: 0; padding: 0;}
+body{ overflow: hidden; font-family:'Segoe UI','Orbitron', monospace; background:#1a0a0a; color:#ffcccc;}
+
+.logo-header{ position: fixed; top: 20px; left: 20px; z-index: 1000; display: flex; align-items: center; gap: 10px; padding: 10px 16px; background: transparent; border-radius: 50px; border: 2px solid transparent; background-clip: padding-box; box-shadow: 0 8px 32px rgba(255, 50, 0, 0.5), 0 0 40px rgba(200, 0, 0, 0.4);}
+.logo-header::before{ content:''; position: absolute; inset: -2px; background: linear-gradient(135deg,#ff3200,#ff6400,#ffaa00, #ff3200); border-radius: 50px; z-index: -2; animation: gradientShift 5s ease infinite; background-size: 300% 300%;}
+@keyframes gradientShift{ 0%, 100%{ background-position: 0% 50%;} 50%{ background-position: 100% 50%;}}
+.logo-header::after{ content:''; position: absolute; inset: 2px; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-radius: 48px; z-index: -1;}
+.logo-header img{ width: 40px; height: 40px; border-radius: 10px; animation: logoPulse 2s ease-in-out infinite; position: relative; z-index: 1;}
+@keyframes logoPulse{ 0%, 100%{ transform: scale(1); filter: drop-shadow(0 0 8px #ff3200);} 50%{ transform: scale(1.05); filter: drop-shadow(0 0 15px #ff6400) drop-shadow(0 0 25px #ff3200);}}
+.logo-text{ display: flex; flex-direction: column; gap: 2px; position: relative; z-index: 1;}
+.logo-main{ font-size: 13px; font-weight: 900; background: linear-gradient(135deg,#ffffff,#ff3200,#ffaa00); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: 1px; white-space: nowrap;}
+.logo-sub{ font-size: 11px; color:#ffaa00; font-weight: bold; letter-spacing: 2px; text-shadow: 0 0 10px rgba(255, 170, 0, 0.8);}
+
+#intro-page{ position: fixed; inset: 0; background: radial-gradient(ellipse at center,#2a0a0a 0%,#1a0505 50%,#050000 100%); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 500; transition: opacity 0.8s ease; overflow-y: auto; padding: 80px 20px 20px;}
+#intro-page.hidden{ opacity: 0; pointer-events: none;}
+.intro-image{ width: 90%; max-width: 900px; border-radius: 20px; box-shadow: 0 0 60px rgba(255, 50, 0, 0.6); border: 3px solid rgba(255, 50, 0, 0.7); animation: imageGlow 3s ease-in-out infinite;}
+@keyframes imageGlow{ 0%, 100%{ box-shadow: 0 0 40px rgba(255, 50, 0, 0.5);} 50%{ box-shadow: 0 0 80px rgba(255, 100, 0, 0.8);}}
+.intro-title{ margin-top: 30px; font-size: 42px; font-weight: 900; background: linear-gradient(135deg,#ffffff,#ff3200,#ffaa00); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; text-align: center; letter-spacing: 3px; text-shadow: 0 0 30px rgba(255, 50, 0, 0.5);}
+.intro-subtitle{ margin-top: 10px; font-size: 20px; color:#ffaa00; text-align: center; letter-spacing: 5px; text-shadow: 0 0 20px rgba(255, 170, 0, 0.8);}
+.intro-desc{ margin-top: 20px; max-width: 600px; text-align: center; color:#ffcccc; font-size: 14px; line-height: 1.6; padding: 0 20px;}
+
+.difficulty-selector{ margin-top: 40px; display: flex; gap: 25px; flex-wrap: wrap; justify-content: center; perspective: 1000px;}
+.difficulty-btn{ position: relative; padding: 22px 45px; font-size: 18px; font-weight: 900; border: none; border-radius: 18px; color: white; cursor: pointer; text-transform: uppercase; letter-spacing: 3px; min-width: 220px; font-family: 'Orbitron', 'Segoe UI', monospace; transform-style: preserve-3d; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); overflow: hidden;}
+.difficulty-btn::before{ content: ''; position: absolute; top: 0; left: 0; right: 0; height: 50%; border-radius: 18px 18px 50% 50% / 18px 18px 100% 100%; background: linear-gradient(180deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0) 100%); pointer-events: none;}
+.difficulty-btn::after{ content: ''; position: absolute; inset: 2px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.3); border-top-color: rgba(255,255,255,0.5); border-bottom-color: rgba(255,255,255,0.1); pointer-events: none;}
+.difficulty-btn > *{ position: relative; z-index: 2; text-shadow: 0 2px 4px rgba(0,0,0,0.5);}
+
+.difficulty-btn.easy{ background: linear-gradient(145deg, rgba(72, 187, 120, 0.9), rgba(56, 161, 105, 0.95)); box-shadow: inset 0 1px 0 rgba(255,255,255,0.4), inset 0 -3px 0 rgba(0,0,0,0.3), 0 0 30px rgba(72, 187, 120, 0.5), 0 8px 0 #1a5f3a, 0 12px 20px rgba(0,0,0,0.4); animation: glowGreen 3s ease-in-out infinite;}
+.difficulty-btn.medium{ background: linear-gradient(145deg, rgba(236, 201, 75, 0.9), rgba(214, 158, 46, 0.95)); box-shadow: inset 0 1px 0 rgba(255,255,255,0.4), inset 0 -3px 0 rgba(0,0,0,0.3), 0 0 30px rgba(236, 201, 75, 0.5), 0 8px 0 #7c5a1a, 0 12px 20px rgba(0,0,0,0.4); animation: glowYellow 3s ease-in-out infinite;}
+.difficulty-btn.hard{ background: linear-gradient(145deg, rgba(229, 62, 62, 0.9), rgba(197, 48, 48, 0.95)); box-shadow: inset 0 1px 0 rgba(255,255,255,0.4), inset 0 -3px 0 rgba(0,0,0,0.3), 0 0 30px rgba(229, 62, 62, 0.5), 0 8px 0 #5a1a1a, 0 12px 20px rgba(0,0,0,0.4); animation: glowRed 3s ease-in-out infinite;}
+
+@keyframes glowGreen{ 0%, 100%{ box-shadow: inset 0 1px 0 rgba(255,255,255,0.4), inset 0 -3px 0 rgba(0,0,0,0.3), 0 0 30px rgba(72, 187, 120, 0.5), 0 8px 0 #1a5f3a, 0 12px 20px rgba(0,0,0,0.4);} 50%{ box-shadow: inset 0 1px 0 rgba(255,255,255,0.4), inset 0 -3px 0 rgba(0,0,0,0.3), 0 0 50px rgba(72, 187, 120, 0.8), 0 8px 0 #1a5f3a, 0 12px 20px rgba(0,0,0,0.4);}}
+@keyframes glowYellow{ 0%, 100%{ box-shadow: inset 0 1px 0 rgba(255,255,255,0.4), inset 0 -3px 0 rgba(0,0,0,0.3), 0 0 30px rgba(236, 201, 75, 0.5), 0 8px 0 #7c5a1a, 0 12px 20px rgba(0,0,0,0.4);} 50%{ box-shadow: inset 0 1px 0 rgba(255,255,255,0.4), inset 0 -3px 0 rgba(0,0,0,0.3), 0 0 50px rgba(236, 201, 75, 0.8), 0 8px 0 #7c5a1a, 0 12px 20px rgba(0,0,0,0.4);}}
+@keyframes glowRed{ 0%, 100%{ box-shadow: inset 0 1px 0 rgba(255,255,255,0.4), inset 0 -3px 0 rgba(0,0,0,0.3), 0 0 30px rgba(229, 62, 62, 0.5), 0 8px 0 #5a1a1a, 0 12px 20px rgba(0,0,0,0.4);} 50%{ box-shadow: inset 0 1px 0 rgba(255,255,255,0.4), inset 0 -3px 0 rgba(0,0,0,0.3), 0 0 50px rgba(229, 62, 62, 0.8), 0 8px 0 #5a1a1a, 0 12px 20px rgba(0,0,0,0.4);}}
+
+.difficulty-btn:hover{ transform: translateY(-4px) rotateX(-5deg);}
+.difficulty-btn:active{ transform: translateY(4px) rotateX(0deg);}
+
+.difficulty-info{ margin-top: 30px; padding: 20px; background: rgba(0,0,0,0.5); border-radius: 20px; max-width: 600px; text-align: center; border: 1px solid rgba(255,50,0,0.3);}
+.difficulty-info h3{ color: #ff3200; margin-bottom: 15px; font-size: 20px;}
+.difficulty-info p{ color: #ffcccc; margin: 8px 0; font-size: 13px; line-height: 1.6;}
+
+#simulator-page{ position: fixed; inset: 0; opacity: 0; pointer-events: none; transition: opacity 1s ease;}
+#simulator-page.active{ opacity: 1; pointer-events: all;}
+
+#stats-panel{ position: fixed; top: 90px; left: 20px; z-index: 100; background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(8px); border-radius: 20px; padding: 8px 15px; border-left: 4px solid #ff3200; pointer-events: none; font-family: monospace;}
+.stats{ font-size: 12px; display: flex; gap: 10px; flex-wrap: wrap;}
+.stat{ background:#2a0a0a; padding: 3px 10px; border-radius: 20px; border: 1px solid #ff3200;}
+
+#survival-panel{ position: fixed; top: 140px; left: 20px; z-index: 100; background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(8px); border-radius: 20px; padding: 10px 15px; border-left: 4px solid #ff3200; pointer-events: none; font-family: monospace; font-size: 11px; color:#ffcccc; max-width: 280px;}
+#survival-panel .title{ color: #ff3200; font-size: 12px; margin-bottom: 5px;}
+
+#drone-panel{ position: fixed; top: 140px; right: 20px; z-index: 100; background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(8px); border-radius: 20px; padding: 10px 15px; border-right: 4px solid #ffaa00; pointer-events: none; font-family: monospace; font-size: 11px; color:#ffcccc; min-width: 220px;}
+#drone-panel .title{ color: #ffaa00; font-size: 12px; margin-bottom: 5px;}
+
+#score-panel{ position: fixed; top: 20px; right: 20px; z-index: 100; background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(8px); border-radius: 20px; padding: 10px 15px; border-right: 4px solid #ffaa00; pointer-events: none; font-family: monospace; text-align: center;}
+#score-value{ font-size: 36px; font-weight: bold; color: #ffaa00; text-shadow: 0 0 10px #ffaa00;}
+
+#notification{ position: fixed; top: 200px; left: 50%; transform: translateX(-50%); background: linear-gradient(135deg,#ff3200,#ff6400); color: white; padding: 12px 28px; border-radius: 30px; font-weight: bold; font-family: monospace; z-index: 9999; opacity: 0; transition: opacity 0.3s, top 0.3s; box-shadow: 0 8px 25px rgba(255, 50, 0, 0.5); white-space: nowrap; font-size: 14px; pointer-events: none;}
+#notification.show{ opacity: 1; top: 220px;}
+#notification.success{ background: linear-gradient(135deg,#55ff55,#22aa22); box-shadow: 0 8px 25px rgba(85, 255, 85, 0.5);}
+#notification.hit{ background: linear-gradient(135deg,#ff3300,#cc0000); box-shadow: 0 8px 25px rgba(255, 51, 0, 0.5);}
+
+.lesson-badge{ position: fixed; bottom: 20px; right: 20px; background:#000000aa; padding: 5px 12px; border-radius: 20px; font-size: 11px; color:#ffaa00; pointer-events: none; font-family: monospace; z-index: 100;}
+
+#resetBtn, #exitMenuBtn{ position: fixed; bottom: 130px; z-index: 9999; padding: 14px 35px; border-radius: 16px; border: none; font-weight: 900; font-family: 'Orbitron', 'Segoe UI', monospace; cursor: pointer; font-size: 14px; color: white; letter-spacing: 2px; text-transform: uppercase; backdrop-filter: blur(10px); transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);}
+#resetBtn{ left: calc(50% - 180px); background: linear-gradient(145deg, rgba(255, 50, 0, 0.85), rgba(200, 30, 0, 0.9)); box-shadow: inset 0 1px 0 rgba(255,255,255,0.3), inset 0 -3px 0 rgba(0,0,0,0.2), inset 0 0 30px rgba(255, 50, 0, 0.3), 0 6px 0 rgba(100, 20, 0, 0.8), 0 10px 20px rgba(0,0,0,0.4), 0 0 40px rgba(255, 50, 0, 0.5); text-shadow: 0 2px 4px rgba(0,0,0,0.5), 0 0 15px rgba(255, 50, 0, 0.8);}
+#exitMenuBtn{ left: calc(50% + 20px); background: linear-gradient(145deg, rgba(100, 100, 100, 0.85), rgba(60, 60, 60, 0.9)); box-shadow: inset 0 1px 0 rgba(255,255,255,0.3), inset 0 -3px 0 rgba(0,0,0,0.25), inset 0 0 30px rgba(100, 100, 100, 0.3), 0 6px 0 rgba(40, 40, 40, 0.8), 0 10px 20px rgba(0,0,0,0.4), 0 0 40px rgba(100, 100, 100, 0.5); text-shadow: 0 2px 4px rgba(0,0,0,0.5), 0 0 15px rgba(100, 100, 100, 0.8);}
+#resetBtn:hover, #exitMenuBtn:hover{ transform: translateY(-3px);}
+#resetBtn:active, #exitMenuBtn:active{ transform: translateY(3px);}
+
+#controls-hint{ position: fixed; bottom: 20px; left: 20px; background: rgba(0,0,0,0.7); padding: 8px 14px; border-radius: 15px; font-size: 11px; pointer-events: none; font-family: monospace; color:#ffcccc; z-index: 100; backdrop-filter: blur(5px); line-height: 1.6;}
+
+.victory-modal, .defeat-modal{ position: fixed; inset: 0; background: rgba(0, 0, 0, 0.9); backdrop-filter: blur(15px); z-index: 10000; display: flex; align-items: center; justify-content: center; opacity: 0; visibility: hidden; transition: all 0.5s ease;}
+.victory-modal.show, .defeat-modal.show{ opacity: 1; visibility: visible;}
+.victory-content, .defeat-content{ background: linear-gradient(135deg,#2a0a0a,#1a0505); border-radius: 30px; padding: 50px; text-align: center; border: 2px solid #ffaa00; box-shadow: 0 0 80px rgba(255, 170, 0, 0.5); max-width: 500px; margin: 20px;}
+.defeat-content{ border-color: #ff3300;}
+.victory-content h2, .defeat-content h2{ font-size: 48px; color:#ffaa00; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 3px;}
+.defeat-content h2{ color:#ff3300;}
+.victory-content p, .defeat-content p{ font-size: 18px; color:#ffcccc; margin: 20px 0; line-height: 1.6;}
+.victory-stats, .defeat-stats{ background: rgba(0, 0, 0, 0.5); border-radius: 20px; padding: 20px; margin: 20px 0; font-size: 20px;}
+.victory-stats span, .defeat-stats span{ color:#ffaa00; font-size: 32px; font-weight: bold;}
+.restart-game-btn, .exit-game-btn{ position: relative; border: none; padding: 16px 40px; border-radius: 16px; font-size: 18px; font-weight: 900; color: white; cursor: pointer; margin: 10px; letter-spacing: 2px; font-family: 'Orbitron', 'Segoe UI', monospace; backdrop-filter: blur(10px); transition: all 0.25s; text-transform: uppercase;}
+.restart-game-btn::before, .exit-game-btn::before{ content: ''; position: absolute; top: 0; left: 0; right: 0; height: 50%; border-radius: 16px 16px 50% 50% / 16px 16px 100% 100%; background: linear-gradient(180deg, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0.05) 100%); pointer-events: none;}
+.restart-game-btn::after, .exit-game-btn::after{ content: ''; position: absolute; inset: 2px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.2); border-top-color: rgba(255,255,255,0.4); pointer-events: none;}
+.restart-game-btn{ background: linear-gradient(145deg, rgba(255, 50, 0, 0.85), rgba(200, 30, 0, 0.9)); box-shadow: inset 0 1px 0 rgba(255,255,255,0.3), inset 0 -3px 0 rgba(0,0,0,0.2), inset 0 0 30px rgba(255, 50, 0, 0.3), 0 6px 0 rgba(100, 20, 0, 0.8), 0 10px 20px rgba(0,0,0,0.4), 0 0 40px rgba(255, 50, 0, 0.5); text-shadow: 0 2px 4px rgba(0,0,0,0.5), 0 0 15px rgba(255, 50, 0, 0.8);}
+.exit-game-btn{ background: linear-gradient(145deg, rgba(100, 100, 100, 0.85), rgba(60, 60, 60, 0.9)); box-shadow: inset 0 1px 0 rgba(255,255,255,0.3), inset 0 -3px 0 rgba(0,0,0,0.25), inset 0 0 30px rgba(100, 100, 100, 0.3), 0 6px 0 rgba(40, 40, 40, 0.8), 0 10px 20px rgba(0,0,0,0.4), 0 0 40px rgba(100, 100, 100, 0.5); text-shadow: 0 2px 4px rgba(0,0,0,0.5), 0 0 15px rgba(100, 100, 100, 0.8);}
+.restart-game-btn:hover, .exit-game-btn:hover{ transform: translateY(-3px);}
+.restart-game-btn:active, .exit-game-btn:active{ transform: translateY(3px);}
+
+@media(max-width: 700px){
+ .logo-header{ padding: 8px 12px; gap: 8px;}
+ .logo-header img{ width: 32px; height: 32px;}
+ .logo-main{ font-size: 11px;}
+ .logo-sub{ font-size: 9px;}
+ .intro-title{ font-size: 28px;}
+ .intro-subtitle{ font-size: 14px;}
+ .difficulty-btn{ padding: 16px 30px; font-size: 16px; min-width: 160px;}
+ .victory-content, .defeat-content{ padding: 30px;}
+ .victory-content h2, .defeat-content h2{ font-size: 32px;}
+ #resetBtn, #exitMenuBtn{ bottom: 100px; padding: 8px 20px; font-size: 12px;}
+ #resetBtn{ left: calc(50% - 120px);}
+ #exitMenuBtn{ left: calc(50% + 10px);}
+ #survival-panel, #drone-panel{ display: none;}
+}
+</style>
+</head>
+<body>
+
+<div class="logo-header">
+  <img id="logoImg" src="favicon.ico" alt="ВЫЖИВШИЙ">
+  <div class="logo-text">
+    <div class="logo-main">Qwen | Урок 23: Выживший</div>
+    <div class="logo-sub">ОПЕРАТОР ВЫЖИВШИЙ 🏚️</div>
+  </div>
+</div>
+
+<div id="intro-page">
+  <img src="uav-operator.jpg" alt="Оператор ВЫЖИВШИЙ" class="intro-image">
+  <h1 class="intro-title">ОПЕРАТОР ВЫЖИВШИЙ</h1>
+  <div class="intro-subtitle">Qwen · БПЛА ТРЕНАЖЁР · УРОК 23</div>
+  <div class="intro-desc">
+    Выживите в зоне поражения как можно дольше! Волны вражеских дронов 
+    атакуют вас со всех сторон. Уклоняйтесь, маневрируйте, сбивайте врагов. 
+    Сколько волн вы сможете пережить?
+  </div>
+  
+  <div class="difficulty-selector">
+    <button class="difficulty-btn easy" onclick="startSimulator('easy')"><span>🟢 Лёгкий</span></button>
+    <button class="difficulty-btn medium" onclick="startSimulator('medium')"><span>🟡 Средний</span></button>
+    <button class="difficulty-btn hard" onclick="startSimulator('hard')"><span>🔴 Сложный</span></button>
+  </div>
+  
+  <div class="difficulty-info">
+    <h3>📊 Параметры уровней:</h3>
+    <p><strong>🟢 Лёгкий:</strong> Медленные враги, больше здоровья</p>
+    <p><strong>🟡 Средний:</strong> Средняя скорость врагов</p>
+    <p><strong>🔴 Сложный:</strong> Быстрые враги, мало здоровья</p>
+    <p style="color:#ff6666; margin-top:10px;"><strong>⚠️ ЗАДАЧА:</strong> Выжить как можно больше волн!</p>
+  </div>
+</div>
+
+<div id="simulator-page">
+  <div id="stats-panel">
+    <div class="stats">
+      <div class="stat">⏱️ Время: <span id="survival-time">0</span>с</div>
+      <div class="stat">🌊 Волна: <span id="current-wave">1</span></div>
+      <div class="stat">❤️ Здоровье: <span id="health">100</span>%</div>
+    </div>
+  </div>
+
+  <div id="survival-panel">
+    <div class="title">🏚️ Выживание:</div>
+    <div style="font-size: 10px; line-height: 1.8;">
+      Врагов в волне: <span id="enemies-in-wave">3</span><br>
+      Осталось врагов: <span id="enemies-left">3</span><br>
+      Убито всего: <span id="total-kills">0</span>
+    </div>
+  </div>
+
+  <div id="drone-panel">
+    <div class="title">🚁 Ваш дрон:</div>
+    <div style="font-size: 11px; line-height: 1.8;">
+      Высота: <span id="drone-altitude">10</span>м<br>
+      Скорость: <span id="drone-speed">0</span> м/с<br>
+      Сигнал: <span id="drone-signal">100</span>%
+    </div>
+  </div>
+
+  <div id="score-panel">
+    🏆 РЕКОРД<br>
+    <span id="best-score">0</span>
+  </div>
+
+  <div id="notification"></div>
+
+  <div id="controls-hint">
+    🎮 WASD — управление дроном<br>
+    🖱️ Зажать ЛКМ + двигать — обзор 360°<br>
+    ⬆️ Q/Shift — набор высоты<br>
+    ⬇️ E/Ctrl — снижение<br>
+    🎯 Столкнитесь с врагом чтобы сбить!<br>
+    ⚠️ Избегайте вражеских дронов!
+  </div>
+
+  <div class="lesson-badge">🏚️ ЗАДАНИЕ: Выжить как можно дольше</div>
+
+  <button id="resetBtn"><span>🔄 Перезапустить</span></button>
+  <button id="exitMenuBtn"><span>🚪 Выйти в меню</span></button>
+</div>
+
+<div id="victoryModal" class="victory-modal">
+  <div class="victory-content">
+    <h2>🏆 ВЫ ПОБЕДИЛИ! 🏆</h2>
+    <p>Невероятно! Вы прошли все волны!<br>Вы настоящий выживший!</p>
+    <div class="victory-stats">
+      Волн пройдено: <span id="victoryWaves">0</span> 🌊<br>
+      Врагов сбито: <span id="victoryKills">0</span> 🎯<br>
+      Время: <span id="victoryTime">0</span>с ⏱️
+    </div>
+    <button class="restart-game-btn" id="fullRestartBtn"><span>🔄 НАЧАТЬ ЗАНОВО</span></button>
+    <button class="exit-game-btn" id="exitToMenuBtn"><span>🚪 В МЕНЮ</span></button>
+  </div>
+</div>
+
+<div id="defeatModal" class="defeat-modal">
+  <div class="defeat-content">
+    <h2>💥 ВЫ ПОГИБЛИ!</h2>
+    <p id="defeat-reason">Ваш дрон уничтожен!</p>
+    <div class="defeat-stats">
+      Волна: <span id="defeatWave">1</span> 🌊<br>
+      Убито врагов: <span id="defeatKills">0</span> 🎯<br>
+      Время: <span id="defeatTime">0</span>с ⏱️
+    </div>
+    <button class="restart-game-btn" id="defeatRestartBtn"><span>🔄 ПОПРОБОВАТЬ СНОВА</span></button>
+    <button class="exit-game-btn" id="defeatExitBtn"><span>🚪 В МЕНЮ</span></button>
+  </div>
+</div>
+
+<audio id="bg-music" loop>
+  <source src="vizhivshiy-theme.mp3" type="audio/mpeg">
+</audio>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+console.log('🏚️ Выживший-симулятор загружен');
+console.log('🎮 Управление: WASD + мышь для обзора 360°');
+console.log('⚠️ Задача: Выжить как можно больше волн!');
+
+const DIFFICULTY_CONFIG = {
+  easy: { maxWaves: 5, enemiesPerWave: 3, enemySpeed: 5, maxHealth: 150, name: 'Лёгкий' },
+  medium: { maxWaves: 8, enemiesPerWave: 5, enemySpeed: 8, maxHealth: 100, name: 'Средний' },
+  hard: { maxWaves: 10, enemiesPerWave: 7, enemySpeed: 12, maxHealth: 70, name: 'Сложный' }
+};
+
+let currentDifficulty = 'easy';
+let state = {
+  animationId: null, gameCompleted: false, timeLeft: 0, timerInterval: null, isRestarting: false,
+  currentWave: 1, totalKills: 0, health: 100, maxHealth: 100,
+  dronePos: new THREE.Vector3(0, 10, 30),
+  droneVel: new THREE.Vector3(0, 0, 0),
+  propAngle: 0, signalLevel: 100,
+  cameraAngle: 0, cameraPitch: -0.3,
+  bestScore: parseInt(localStorage.getItem('survivor_best_score') || '0'),
+  enemies: [], waveInProgress: false
+};
+
+let scene, camera, renderer, droneGroup;
+let propellers = [];
+let audioCtx = null, notifTimeout = null, lastNotifText = "";
+let keys = {};
+let mouseDown = false, lastMouseX = 0, lastMouseY = 0;
+let lastDamageTime = 0;
+let lastFrameTime = performance.now();
+
+function ensureAudio(){
+  if(!audioCtx){ try{ audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e){ return false; } }
+  if(audioCtx.state === 'suspended') audioCtx.resume().catch(() => {});
+  return true;
+}
+
+function playSound(freq, duration, type = 'square', volume = 0.08){
+  if(!ensureAudio()) return;
+  try{
+    const now = audioCtx.currentTime;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = type; osc.frequency.value = freq;
+    gain.gain.setValueAtTime(volume, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+    osc.connect(gain); gain.connect(audioCtx.destination);
+    osc.start(now); osc.stop(now + duration);
+  } catch(e){}
+}
+
+const SFX = {
+  hit: () => { playSound(800, 0.1, 'sine', 0.2); setTimeout(() => playSound(600, 0.15, 'sine', 0.15), 50); },
+  explosion: () => { playSound(200, 0.3, 'sawtooth', 0.3); setTimeout(() => playSound(100, 0.4, 'square', 0.25), 100); },
+  crash: () => { playSound(100, 0.5, 'sawtooth', 0.3); setTimeout(() => playSound(80, 0.6, 'square', 0.25), 100); },
+  victory: () => { playSound(523, 0.15, 'sine', 0.12); setTimeout(() => playSound(659, 0.15, 'sine', 0.12), 150); setTimeout(() => playSound(784, 0.15, 'sine', 0.12), 300); setTimeout(() => playSound(1047, 0.3, 'sine', 0.15), 450); },
+  warning: () => { playSound(400, 0.15, 'square', 0.1); },
+  waveStart: () => { playSound(300, 0.2, 'sine', 0.2); setTimeout(() => playSound(400, 0.2, 'sine', 0.2), 150); setTimeout(() => playSound(500, 0.3, 'sine', 0.25), 300); }
+};
+
+function showNotification(text, type = ''){
+  const n = document.getElementById('notification');
+  if(!n || lastNotifText === text) return;
+  lastNotifText = text;
+  n.innerText = text;
+  n.className = 'show ' + type;
+  if(notifTimeout) clearTimeout(notifTimeout);
+  notifTimeout = setTimeout(() => { n.className = ''; lastNotifText = ""; }, 2500);
+}
+
+async function startSimulator(difficulty){
+  currentDifficulty = difficulty;
+  const config = DIFFICULTY_CONFIG[difficulty];
+  state.health = config.maxHealth;
+  state.maxHealth = config.maxHealth;
+  ensureAudio();
+  const music = document.getElementById('bg-music');
+  if(music.paused){ music.volume = 0.5; music.play().catch(e => {}); }
+  
+  document.getElementById('intro-page').classList.add('hidden');
+  setTimeout(() => {
+    document.getElementById('simulator-page').classList.add('active');
+    document.getElementById('best-score').innerText = state.bestScore;
+    document.getElementById('health').innerText = state.maxHealth;
+    initSimulator();
+    startSurvivalTimer();
+  }, 800);
+}
+
+function exitToMenu(){
+  if(state.animationId){ cancelAnimationFrame(state.animationId); state.animationId = null; }
+  if(state.timerInterval){ clearInterval(state.timerInterval); state.timerInterval = null; }
+  document.getElementById('victoryModal').classList.remove('show');
+  document.getElementById('defeatModal').classList.remove('show');
+  document.getElementById('simulator-page').classList.remove('active');
+  setTimeout(() => { document.getElementById('intro-page').classList.remove('hidden'); }, 300);
+  const music = document.getElementById('bg-music');
+  music.pause(); music.currentTime = 0;
+}
+
+function showVictoryModal(){
+  if(state.gameCompleted) return;
+  state.gameCompleted = true;
+  if(state.timerInterval){ clearInterval(state.timerInterval); state.timerInterval = null; }
+  if(state.animationId){ cancelAnimationFrame(state.animationId); state.animationId = null; }
+  
+  document.getElementById('victoryWaves').innerText = state.currentWave - 1;
+  document.getElementById('victoryKills').innerText = state.totalKills;
+  document.getElementById('victoryTime').innerText = state.timeLeft;
+  document.getElementById('victoryModal').classList.add('show');
+  SFX.victory();
+  
+  if(state.totalKills > state.bestScore){
+    state.bestScore = state.totalKills;
+    localStorage.setItem('survivor_best_score', state.bestScore);
+    document.getElementById('best-score').innerText = state.bestScore;
+    showNotification("🏆 НОВЫЙ РЕКОРД!", 'success');
+  }
+}
+
+function showDefeatModal(reason){
+  if(state.gameCompleted) return;
+  state.gameCompleted = true;
+  if(state.timerInterval){ clearInterval(state.timerInterval); state.timerInterval = null; }
+  if(state.animationId){ cancelAnimationFrame(state.animationId); state.animationId = null; }
+  
+  document.getElementById('defeat-reason').innerText = reason || 'Вы погибли!';
+  document.getElementById('defeatWave').innerText = state.currentWave;
+  document.getElementById('defeatKills').innerText = state.totalKills;
+  document.getElementById('defeatTime').innerText = state.timeLeft;
+  document.getElementById('defeatModal').classList.add('show');
+  SFX.crash();
+  
+  if(state.totalKills > state.bestScore){
+    state.bestScore = state.totalKills;
+    localStorage.setItem('survivor_best_score', state.bestScore);
+    document.getElementById('best-score').innerText = state.bestScore;
+  }
+}
+
+function startSurvivalTimer(){
+  if(state.timerInterval) clearInterval(state.timerInterval);
+  state.timeLeft = 0;
+  const timerElem = document.getElementById('survival-time');
+  state.timerInterval = setInterval(() => {
+    if(state.gameCompleted) return;
+    state.timeLeft++;
+    if(timerElem) timerElem.innerText = state.timeLeft;
+  }, 1000);
+}
+
+function createDrone(color){
+  const droneGroup = new THREE.Group();
+  const propellers = [];
+  const carbonMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.6, metalness: 0.8 });
+  const goldMat = new THREE.MeshStandardMaterial({ color: 0xd4af37, roughness: 0.15, metalness: 0.9 });
+  const titaniumMat = new THREE.MeshStandardMaterial({ color: 0xcccccc, roughness: 0.3, metalness: 0.7 });
+  const neonPropMat = new THREE.MeshStandardMaterial({ color: color, roughness: 0.1, metalness: 0.1, transparent: true, opacity: 0.7 });
+  const plasticMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.5, metalness: 0.2 });
+  const lensMat = new THREE.MeshStandardMaterial({ color: 0x050505, roughness: 0.05, metalness: 1.0 });
+  const pcbMat = new THREE.MeshStandardMaterial({ color: 0x0f3d0f, roughness: 0.5, metalness: 0.2 });
+  
+  const bottomPlate = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.015, 0.45), carbonMat);
+  bottomPlate.position.y = -0.03;
+  droneGroup.add(bottomPlate);
+  
+  const topPlate = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.015, 0.35), carbonMat);
+  topPlate.position.y = 0.05;
+  droneGroup.add(topPlate);
+  
+  const standoffGeo = new THREE.CylinderGeometry(0.01, 0.01, 0.065, 8);
+  [{x: 0.07, z: 0.15}, {x: -0.07, z: 0.15}, {x: 0.07, z: -0.15}, {x: -0.07, z: -0.15}].forEach(pos => {
+    const pillar = new THREE.Mesh(standoffGeo, titaniumMat);
+    pillar.position.set(pos.x, 0.01, pos.z);
+    droneGroup.add(pillar);
+  });
+  
+  const pcb = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.01, 0.12), pcbMat);
+  pcb.position.set(0, 0.01, 0);
+  droneGroup.add(pcb);
+  
+  const heatsink = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.015, 0.1), titaniumMat);
+  heatsink.position.set(0, 0.02, 0);
+  droneGroup.add(heatsink);
+  
+  const armPositions = [
+    { x: 0.26, z: 0.26, angle: -Math.PI / 4 },
+    { x: -0.26, z: 0.26, angle: Math.PI / 4 },
+    { x: 0.26, z: -0.26, angle: Math.PI / 4 },
+    { x: -0.26, z: -0.26, angle: -Math.PI / 4 }
+  ];
+  
+  armPositions.forEach((pos, index) => {
+    const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.36, 8), carbonMat);
+    arm.position.set(pos.x / 2, 0.01, pos.z / 2);
+    arm.rotation.z = Math.PI / 2; arm.rotation.y = pos.angle;
+    droneGroup.add(arm);
+    
+    const motorGroup = new THREE.Group();
+    motorGroup.position.set(pos.x, 0.03, pos.z);
+    const motorBase = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, 0.04, 12), titaniumMat);
+    motorGroup.add(motorBase);
+    const motorBell = new THREE.Mesh(new THREE.CylinderGeometry(0.042, 0.042, 0.03, 12), goldMat);
+    motorBell.position.y = 0.025;
+    motorGroup.add(motorBell);
+    droneGroup.add(motorGroup);
+    
+    const guard = new THREE.Mesh(new THREE.TorusGeometry(0.15, 0.01, 8, 24), plasticMat);
+    guard.rotation.x = Math.PI / 2; guard.position.set(pos.x, 0.06, pos.z);
+    droneGroup.add(guard);
+    
+    const led = new THREE.Mesh(new THREE.SphereGeometry(0.015, 8, 8), 
+      new THREE.MeshBasicMaterial({ color: (index < 2) ? 0x00ff00 : 0xff0000 }));
+    led.position.set(pos.x, -0.02, pos.z);
+    droneGroup.add(led);
+    
+    const propGroup = new THREE.Group();
+    propGroup.position.set(pos.x, 0.075, pos.z);
+    const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.02, 8), titaniumMat);
+    propGroup.add(hub);
+    const nut = new THREE.Mesh(new THREE.ConeGeometry(0.01, 0.015, 6), goldMat);
+    nut.position.y = 0.015; propGroup.add(nut);
+    for(let i = 0; i < 3; i++){
+      const blade = new THREE.Mesh(new THREE.BoxGeometry(0.13, 0.006, 0.022), neonPropMat);
+      blade.position.set(0, 0.005, 0);
+      blade.geometry.translate(0.06, 0, 0);
+      blade.rotation.x = 0.15; blade.rotation.y = (Math.PI * 2 / 3) * i;
+      propGroup.add(blade);
+    }
+    droneGroup.add(propGroup);
+    propellers.push(propGroup);
+  });
+  
+  const cameraGroup = new THREE.Group();
+  cameraGroup.position.set(0, 0.01, 0.22);
+  const mountGeo = new THREE.BoxGeometry(0.01, 0.08, 0.08);
+  const leftMount = new THREE.Mesh(mountGeo, titaniumMat); leftMount.position.x = -0.06;
+  const rightMount = leftMount.clone(); rightMount.position.x = 0.06;
+  cameraGroup.add(leftMount, rightMount);
+  
+  const camBodyGroup = new THREE.Group(); camBodyGroup.rotation.x = -0.25;
+  const camBody = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.07, 0.07), plasticMat);
+  camBodyGroup.add(camBody);
+  const lensRing = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 0.04, 12), titaniumMat);
+  lensRing.rotation.x = Math.PI / 2; lensRing.position.set(0, 0, 0.04);
+  camBodyGroup.add(lensRing);
+  const lensGlass = new THREE.Mesh(new THREE.CylinderGeometry(0.028, 0.028, 0.005, 12), lensMat);
+  lensGlass.rotation.x = Math.PI / 2; lensGlass.position.set(0, 0, 0.061);
+  camBodyGroup.add(lensGlass);
+  cameraGroup.add(camBodyGroup);
+  droneGroup.add(cameraGroup);
+  
+  const droneLight = new THREE.PointLight(color, 1.5, 4);
+  droneLight.position.set(0, -0.03, 0);
+  droneGroup.add(droneLight);
+  
+  return { group: droneGroup, propellers: propellers };
+}
+
+// Рекурсивная очистка Three.js объектов
+function disposeHierarchy(obj){
+  if(obj.geometry) obj.geometry.dispose();
+  if(obj.material){
+    if(Array.isArray(obj.material)){
+      obj.material.forEach(m => { if(m.map) m.map.dispose(); m.dispose(); });
+    } else {
+      if(obj.material.map) obj.material.map.dispose();
+      obj.material.dispose();
+    }
+  }
+  if(obj.children){
+    for(let i = 0; i < obj.children.length; i++){
+      disposeHierarchy(obj.children[i]);
+    }
+  }
+}
+
+function initSimulator(){
+  console.log('🏚️ Инициализация выживший-симулятора...');
+  
+  // Очистка старого рендерера (предотвращает утечку WebGL-контекстов)
+  if(renderer){
+    try { renderer.dispose(); } catch(e){}
+    if(renderer.domElement && renderer.domElement.parentNode){
+      renderer.domElement.parentNode.removeChild(renderer.domElement);
+    }
+    renderer = null;
+  }
+  
+  state.gameCompleted = false;
+  state.dronePos.set(0, 10, 30);
+  state.droneVel.set(0, 0, 0);
+  state.propAngle = 0;
+  state.currentWave = 1;
+  state.totalKills = 0;
+  state.signalLevel = 100;
+  state.cameraAngle = 0;
+  state.cameraPitch = -0.3;
+  state.enemies = [];
+  state.waveInProgress = false;
+  lastDamageTime = 0;
+  lastFrameTime = performance.now();
+  
+  scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x1a0505);
+  scene.fog = new THREE.FogExp2(0x1a0505, 0.005);
+  
+  camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+  camera.position.set(0, 15, 35);
+  
+  renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.2;
+  
+  const simPage = document.getElementById('simulator-page');
+  if (simPage.firstChild) {
+    simPage.insertBefore(renderer.domElement, simPage.firstChild);
+  } else {
+    simPage.appendChild(renderer.domElement);
+  }
+  
+  scene.add(new THREE.AmbientLight(0xffffff, 0.4));
+  const sunLight = new THREE.DirectionalLight(0xff6400, 0.8);
+  sunLight.position.set(50, 100, 50);
+  sunLight.castShadow = true;
+  sunLight.shadow.mapSize.width = 2048;
+  sunLight.shadow.mapSize.height = 2048;
+  sunLight.shadow.camera.near = 0.5;
+  sunLight.shadow.camera.far = 500;
+  sunLight.shadow.camera.left = -100;
+  sunLight.shadow.camera.right = 100;
+  sunLight.shadow.camera.top = 100;
+  sunLight.shadow.camera.bottom = -100;
+  scene.add(sunLight);
+  
+  const groundMat = new THREE.MeshStandardMaterial({ color: 0x2a0a0a, roughness: 0.9 });
+  const ground = new THREE.Mesh(new THREE.PlaneGeometry(300, 300), groundMat);
+  ground.rotation.x = -Math.PI / 2;
+  ground.receiveShadow = true;
+  scene.add(ground);
+  
+  const gridHelper = new THREE.GridHelper(300, 100, 0xff3200, 0x640032);
+  gridHelper.position.y = 0.01;
+  scene.add(gridHelper);
+  
+  const playerDrone = createDrone(0x00ff00);
+  droneGroup = playerDrone.group;
+  propellers = playerDrone.propellers;
+  droneGroup.position.copy(state.dronePos);
+  scene.add(droneGroup);
+  
+  animate();
+  
+  setTimeout(() => startWave(), 2000);
+  
+  const config = DIFFICULTY_CONFIG[currentDifficulty];
+  console.log(`✅ Выживший-симулятор запущен. Уровень: ${config.name}`);
+}
+
+function startWave(){
+  if(state.gameCompleted) return;
+  
+  const config = DIFFICULTY_CONFIG[currentDifficulty];
+  const enemyCount = config.enemiesPerWave + Math.floor(state.currentWave / 2);
+  
+  SFX.waveStart();
+  showNotification(`🌊 ВОЛНА ${state.currentWave}! Врагов: ${enemyCount}`, 'hit');
+  
+  document.getElementById('current-wave').innerText = state.currentWave;
+  document.getElementById('enemies-in-wave').innerText = enemyCount;
+  document.getElementById('enemies-left').innerText = enemyCount;
+  
+  for(let i = 0; i < enemyCount; i++){
+    const angle = (i / enemyCount) * Math.PI * 2 + Math.random() * 0.5;
+    const radius = 40 + Math.random() * 20;
+    const x = Math.cos(angle) * radius;
+    const z = Math.sin(angle) * radius;
+    const y = 5 + Math.random() * 10;
+    
+    const enemyDrone = createDrone(0xff0000);
+    enemyDrone.group.position.set(x, y, z);
+    scene.add(enemyDrone.group);
+    
+    state.enemies.push({
+      group: enemyDrone.group,
+      propellers: enemyDrone.propellers,
+      pos: new THREE.Vector3(x, y, z),
+      alive: true,
+      targetPos: state.dronePos.clone()
+    });
+  }
+  
+  state.waveInProgress = true;
+}
+
+function updateDrone(delta){
+  if(state.gameCompleted) return;
+  
+  const cameraForward = new THREE.Vector3();
+  camera.getWorldDirection(cameraForward);
+  cameraForward.y = 0;
+  cameraForward.normalize();
+  
+  const cameraRight = new THREE.Vector3();
+  cameraRight.crossVectors(cameraForward, new THREE.Vector3(0, 1, 0)).normalize();
+  
+  // Скорость, нормированная по времени (12 единиц/сек = базовая)
+  const speed = 12 * delta;
+  
+  if(keys['w'] || keys['arrowup']) {
+    state.droneVel.x += cameraForward.x * speed;
+    state.droneVel.z += cameraForward.z * speed;
+  }
+  if(keys['s'] || keys['arrowdown']) {
+    state.droneVel.x -= cameraForward.x * speed;
+    state.droneVel.z -= cameraForward.z * speed;
+  }
+  if(keys['a'] || keys['arrowleft']) {
+    state.droneVel.x -= cameraRight.x * speed;
+    state.droneVel.z -= cameraRight.z * speed;
+  }
+  if(keys['d'] || keys['arrowright']) {
+    state.droneVel.x += cameraRight.x * speed;
+    state.droneVel.z += cameraRight.z * speed;
+  }
+  if(keys['q'] || keys['shift']) state.droneVel.y += speed * 0.5;
+  if(keys['e'] || keys['control']) state.droneVel.y -= speed * 0.5;
+  
+  // Затухание тоже зависит от времени
+  const damping = Math.pow(0.05, delta);
+  state.droneVel.multiplyScalar(damping);
+  state.dronePos.add(state.droneVel.clone().multiplyScalar(delta * 60));
+  
+  state.dronePos.x = Math.max(-100, Math.min(100, state.dronePos.x));
+  state.dronePos.z = Math.max(-100, Math.min(100, state.dronePos.z));
+  state.dronePos.y = Math.max(2, Math.min(30, state.dronePos.y));
+  
+  if(droneGroup){
+    droneGroup.position.copy(state.dronePos);
+    if(state.droneVel.length() > 0.01){
+      const angle = Math.atan2(state.droneVel.x, state.droneVel.z);
+      droneGroup.rotation.y = angle;
+    }
+    const tiltX = -state.droneVel.z * 0.3;
+    const tiltZ = state.droneVel.x * 0.3;
+    droneGroup.rotation.x += (tiltX - droneGroup.rotation.x) * 0.1;
+    droneGroup.rotation.z += (tiltZ - droneGroup.rotation.z) * 0.1;
+  }
+  
+  const config = DIFFICULTY_CONFIG[currentDifficulty];
+  let aliveEnemies = 0;
+  
+  state.enemies.forEach((enemy) => {
+    if(!enemy.alive) return;
+    aliveEnemies++;
+    
+    const direction = new THREE.Vector3().subVectors(state.dronePos, enemy.pos).normalize();
+    // Скорость врагов тоже нормирована по времени
+    enemy.pos.add(direction.multiplyScalar(config.enemySpeed * delta));
+    enemy.group.position.copy(enemy.pos);
+    
+    const aiVel = new THREE.Vector3().subVectors(state.dronePos, enemy.pos);
+    if(aiVel.length() > 0.01){
+      const angle = Math.atan2(aiVel.x, aiVel.z);
+      enemy.group.rotation.y = angle;
+    }
+    
+    const distToPlayer = state.dronePos.distanceTo(enemy.pos);
+    if(distToPlayer < 2){
+      enemy.alive = false;
+      scene.remove(enemy.group);
+      state.totalKills++;
+      SFX.explosion();
+      showNotification(`🎯 Враг сбит!`, 'success');
+      
+      document.getElementById('total-kills').innerText = state.totalKills;
+      document.getElementById('enemies-left').innerText = aliveEnemies - 1;
+    } else if(distToPlayer < 3){
+      // Урон теперь с кулдауном — не зависит от FPS
+      const now = performance.now();
+      if(now - lastDamageTime > 500){
+        state.health -= 8;
+        lastDamageTime = now;
+        document.getElementById('health').innerText = Math.max(0, Math.round(state.health));
+        SFX.warning();
+        
+        if(state.health <= 0){
+          showDefeatModal("💥 Ваш дрон уничтожен!");
+        }
+      }
+    }
+  });
+  
+  if(state.waveInProgress && aliveEnemies === 0){
+    state.waveInProgress = false;
+    state.currentWave++;
+    
+    if(state.currentWave > config.maxWaves){
+      setTimeout(() => showVictoryModal(), 1000);
+    } else {
+      setTimeout(() => startWave(), 3000);
+    }
+  }
+  
+  document.getElementById('drone-altitude').innerText = Math.round(state.dronePos.y);
+  document.getElementById('drone-speed').innerText = Math.round(state.droneVel.length() * 10);
+  document.getElementById('drone-signal').innerText = Math.round(state.signalLevel);
+  
+  state.signalLevel = Math.max(0, state.signalLevel - delta * 0.5);
+}
+
+function animate(){
+  if(state.gameCompleted){ state.animationId = null; return; }
+  state.animationId = requestAnimationFrame(animate);
+  
+  const now = performance.now();
+  let delta = (now - lastFrameTime) / 1000;
+  lastFrameTime = now;
+  // Ограничиваем delta, чтобы при переключении вкладки не было телепорта
+  if(delta > 0.1) delta = 0.1;
+  
+  updateDrone(delta);
+  
+  state.propAngle += delta * 50;
+  propellers.forEach(p => { p.rotation.y = state.propAngle; });
+  state.enemies.forEach(enemy => {
+    if(enemy.alive){
+      enemy.propellers.forEach(p => { p.rotation.y = state.propAngle; });
+    }
+  });
+  
+  const camTarget = state.dronePos.clone();
+  camTarget.y += 8;
+  const camX = state.dronePos.x + Math.sin(state.cameraAngle) * 15 * Math.cos(state.cameraPitch);
+  const camZ = state.dronePos.z + Math.cos(state.cameraAngle) * 15 * Math.cos(state.cameraPitch);
+  camera.position.set(camX, camTarget.y, camZ);
+  camera.lookAt(state.dronePos);
+  
+  renderer.render(scene, camera);
+}
+
+function handleResize(){
+  if(!camera || !renderer) return;
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+}
+
+function fullGameRestart(){
+  if(state.isRestarting) return;
+  state.isRestarting = true;
+  
+  console.log('🔄 Перезапуск выживания...');
+  
+  if(state.timerInterval){ clearInterval(state.timerInterval); state.timerInterval = null; }
+  if(state.animationId){ cancelAnimationFrame(state.animationId); state.animationId = null; }
+  
+  if(scene){
+    // Рекурсивная очистка всех вложенных мешей
+    scene.traverse(disposeHierarchy);
+    while(scene.children.length > 0) { 
+      scene.remove(scene.children[0]); 
+    }
+    state.enemies = [];
+    propellers = [];
+  }
+  
+  initSimulator();
+  startSurvivalTimer();
+  showNotification("🔄 Выживание перезапущено!", 'success');
+  
+  setTimeout(() => { state.isRestarting = false; }, 500);
+}
+
+function setupEventListeners(){
+  window.addEventListener('resize', handleResize);
+  
+  window.addEventListener('keydown', (e) => { 
+    keys[e.key.toLowerCase()] = true; 
+    if(['arrowup','arrowdown','arrowleft','arrowright',' '].includes(e.key.toLowerCase())) e.preventDefault();
+  });
+  
+  window.addEventListener('keyup', (e) => { keys[e.key.toLowerCase()] = false; });
+  
+  window.addEventListener('blur', () => {
+    keys = {};
+    mouseDown = false;
+  });
+  
+  // Мышь на window — чтобы не соскакивала с canvas
+  window.addEventListener('mousedown', (e) => {
+    if(!renderer || state.gameCompleted) return;
+    mouseDown = true;
+    lastMouseX = e.clientX;
+    lastMouseY = e.clientY;
+  });
+  
+  window.addEventListener('mouseup', () => { mouseDown = false; });
+  
+  window.addEventListener('mousemove', (e) => {
+    if(mouseDown && !state.gameCompleted && renderer){
+      const dx = e.clientX - lastMouseX;
+      const dy = e.clientY - lastMouseY;
+      state.cameraAngle -= dx * 0.005;
+      state.cameraPitch = Math.max(-1.2, Math.min(0.5, state.cameraPitch - dy * 0.005));
+      lastMouseX = e.clientX;
+      lastMouseY = e.clientY;
+    }
+  });
+  
+  document.getElementById('resetBtn').addEventListener('click', () => {
+    fullGameRestart();
+  });
+  document.getElementById('exitMenuBtn').addEventListener('click', exitToMenu);
+  document.getElementById('fullRestartBtn').addEventListener('click', () => {
+    document.getElementById('victoryModal').classList.remove('show');
+    fullGameRestart();
+  });
+  document.getElementById('exitToMenuBtn').addEventListener('click', exitToMenu);
+  document.getElementById('defeatRestartBtn').addEventListener('click', () => {
+    document.getElementById('defeatModal').classList.remove('show');
+    fullGameRestart();
+  });
+  document.getElementById('defeatExitBtn').addEventListener('click', exitToMenu);
+}
+
+// Вызываем ОДИН РАЗ за всю жизнь страницы
+setupEventListeners();
+
+window.addEventListener('beforeunload', () => {
+  if(state.animationId) cancelAnimationFrame(state.animationId);
+  if(state.timerInterval) clearInterval(state.timerInterval);
+  if(audioCtx && audioCtx.state !== 'closed'){ try{ audioCtx.close(); } catch(e){} }
+  if(scene){
+    scene.traverse(disposeHierarchy);
+    while(scene.children.length > 0) { 
+      scene.remove(scene.children[0]); 
+    }
+  }
+  if(renderer){ try { renderer.dispose(); } catch(e){} }
+});
+</script>
+</body>
+</html>
